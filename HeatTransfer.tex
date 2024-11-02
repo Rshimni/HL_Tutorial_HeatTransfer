@@ -16,6 +16,7 @@ citecolor=green,urlcolor=red]{hyperref}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \usepackage{amsmath}
 \usepackage{cleveref}
+\usepackage{authblk}
 %\usepackage[fleqn]{amsmath}
 \usepackage{lineno}
 \usepackage{tikz}
@@ -49,31 +50,32 @@ citecolor=green,urlcolor=red]{hyperref}
 %opening
 \begin{document}
 \title{HiperLife Tutorial: Thermal Conduction}
-\author{LaCàN}
+\author[1]{Arash Imani}
+\affil[1]{LaCàN}
 \maketitle
 
 \linenumbers
 
-\section{Problem Definition} \label{sec: pd} 
-Thermal conduction is the diffusion of thermal energy within one material or between materials in contact. Here we consider an  example of time-dependent linear problem. Consider the transient heat conduction equation \cite{reddy2014introduction}
-
+\section{Problem Definition} \label{sec: pd}
+Thermal conduction is the diffusion of thermal energy within one material or between materials in contact. The higher temperature object has molecules with more kinetic energy; collisions between molecules distributions this kinetic energy until an object has the same thermal energy throughout. Conduction is the main mode of heat transfer between or inside solid materials. Here we consider an  example of time-dependent linear problem. Figure \ref{fig_SB} shows a schematic representation of the problem statement.
+\begin{figure}[htbp]
+	\centering
+	\input{Figures/geometry.tex}
+	\caption{Geometry, BC and computational domain used for the analysis of transient heat transfer.}
+	\label{fig_SB}
+\end{figure}
+\section{Governing Equations} \label{sec: ge}
+In this section we present the governing equations, consider the transient heat conduction equation \cite{reddy2014introduction}
 \begin{equation}\label{eq1}
 	\begin{aligned}
-		 \frac{\partial \theta}{\partial t} - (\frac{\partial^2 \theta}{\partial x^2}+\frac{\partial^2 \theta}{\partial y^2}) = 1
+		\frac{\partial \theta}{\partial t} - (\frac{\partial^2 \theta}{\partial x^2}+\frac{\partial^2 \theta}{\partial y^2}) = 1
 	\end{aligned}
 \end{equation}
 
 where $\theta$ is the non-dimensional temperature in the doamin of $\Omega=[-1,-1]\times[1,1]$, which its
-boundary condition is $\theta = 0$ on $\Gamma$ for $t > 0$ (see Figure \ref{fig_SB}). The initial
+boundary condition is $\theta = 0$ on $\Gamma$ for $t > 0$. The initial
 condition is that $\theta(x, y, 0) = 0$. We wish to find the temperature field inside the domain for
 $t > 0$.
-\begin{figure}[htbp]
-	\centering
-	\input{Figures/geometry.tex}
-	\caption{Illustration of the domain of transient heat transfer problem.}
-	\label{fig_SB}
-\end{figure}
-
 The paramteres of problem are listed as
 \begin{equation}\label{eq2}
 	\begin{aligned}
@@ -89,12 +91,11 @@ Note that the most commonly used method for solving parabolic equation like $([C
 		(1 - \alpha)\{\dot{u}\}^n + \alpha\{\dot{u}\}^{n+1} \approx \frac{\{u\}^{n+1} - \{u\}^n}{t^{n+1} - t^{n}}  \quad \text{for} \quad 0 \leq \alpha \leq 1
 	\end{aligned}
 \end{equation}
-We choose a uniform mesh of $16 \times 16$ to model the domain, and investigate the stability and accuracy of forward method $(\alpha = 0.0)$, Crank-Nicolson $(\alpha = 0.5)$ and backward difference $(\alpha = 1.0)$.
-\section{Weak Form} \label{sec: WF}
-By considering $\Delta t = t^{n+1} - t^{n}$, and substituting $u$ with our temperature field, Eq. (\ref{eq3})  takes the following form
+\section{Weak Form} \label{sec: wf}
+The starting point for the development of the finite element models of Eq. (\ref{eq1}) is their weak forms. By considering $\Delta t = t^{n+1} - t^{n}$, and substituting $u$ with our temperature field, Eq. (\ref{eq3})  takes the following form
 \begin{equation}\label{eq4}
 	\begin{aligned}
-	\{\theta\}^{n+1} = \{\theta\}^n + \Delta t(1 - \alpha)\{\theta_t\}^n + \Delta t\alpha\{\theta_t\}^{n+1}
+		\{\theta\}^{n+1} = \{\theta\}^n + \Delta t(1 - \alpha)\{\theta_t\}^n + \Delta t\alpha\{\theta_t\}^{n+1}
 	\end{aligned}
 \end{equation}
 The time derivatives of $\theta$ on the right hand side of this equation can be calculated from Eq. (\ref{eq1}) for each step, like this 
@@ -129,19 +130,41 @@ and
 		V &= \{v \in H^1(\Omega) : v = 0 \text{ on } \Gamma\}\thinspace.
 	\end{aligned}
 \end{equation}
-Considering  $\boldsymbol{\theta} = \sum \phi_j \theta_j$, and applying integration by part, and also boundary condition, the weak form takes the following form
+where $v$ is a test function, which will be equated, in the our FE model to the interpolation function used for $\theta$.
+
+Applying integration by part, and also considering boundary condition, the weak form takes the following form
 \begin{equation}\label{eq7}
 	\begin{aligned}
-		\mathcal{F}(\theta; v)=\int_{\Omega} \phi_i \phi_j\{\theta\}^{n+1}_j - \Delta t \alpha [\phi_i - \nabla \phi_i (\nabla \phi_j\{\theta\}^{n+1}_j)] \mathrm{d} \Omega - \int_{\Omega} \phi_i\theta^{n} + \Delta t (1-\alpha) [\phi_i -\nabla \phi_i \nabla\theta^n ] \mathrm{d} \Omega\thinspace.
+		\mathcal{F}(\theta; v)=\int_{\Omega} v\{\theta\}^{n+1} - \Delta t \alpha [v - \nabla v (\nabla \{\theta\}^{n+1})] \mathrm{d} \Omega - \int_{\Omega} v\theta^{n} + \Delta t (1-\alpha) [v -\nabla v \nabla\theta^n ] \mathrm{d} \Omega\thinspace.
 	\end{aligned}
 \end{equation}
-Lets rewrite this equation for known and unkown variables. the final formulation need for implementation takes the form of
+\section{Finite Element Model} \label{sec: fem}
+Since we are developing the Ritz-Galerkin finite element model, the choice of the weight functions is restricted to the spaces of approximation functions used for the solution field. Suppose that the dependent variable $\theta$ approximated by expansions of the form
+\begin{equation}\label{eq5}
+	\begin{aligned}
+		\theta(\mathrm{x}, t)= \sum_{m=1}^{M} \phi_m(\mathrm{x}) \mathbf{\theta}^m(t) = \boldsymbol{\Phi}^T\mathbf{\theta} \thinspace,
+	\end{aligned}
+\end{equation}
+Lets rewrite this equation for known and unkown variables.
 \begin{equation}\label{eq8}
 	\begin{aligned}[b]
-		\mathcal{F}(\theta; v)=\int [\phi_i\phi_j + \Delta t \alpha\nabla\phi_i\nabla\phi_j]\{\theta\}^{n+1} \mathrm{d} \Omega - \int  [\phi_i\theta^{n}+\Delta t \alpha \phi_i + \Delta t (1-\alpha) (\phi_i - \nabla \phi_i \nabla\theta^n)]\mathrm{d} \Omega\thinspace.
+		\mathcal{F}(\theta; v)=\int [\boldsymbol{\Phi}\boldsymbol{\Phi}^T + \Delta t \alpha\nabla\boldsymbol{\Phi}\nabla\boldsymbol{\Phi}^T]\{\theta\}^{n+1} \mathrm{d} \Omega - \int  [\boldsymbol{\Phi}\theta^{n}+\Delta t \alpha \boldsymbol{\Phi} + \Delta t (1-\alpha) (\boldsymbol{\Phi} - \nabla \boldsymbol{\Phi} \nabla\theta^n)]\mathrm{d} \Omega\thinspace.
 	\end{aligned}
 \end{equation}
-So the final formulation need for implementation takes the form of
+The above equations can be written symbolically in matrix form as
+\begin{equation}\label{eq8}
+	\begin{aligned}
+		\mathbf{K}\mathbf{\theta} = \mathbf{F}\thinspace.
+	\end{aligned}
+\end{equation}
+The coefficient matrices shown in Eq. (9) are defined by
+\begin{equation}\label{eq10}
+	\begin{aligned}
+		\mathbf{K}_{ij} = \int_{\Omega^e} [\phi_i\phi_j + \Delta t \alpha\nabla\phi_i\nabla\phi_j]\mathrm{d}A\thinspace, \quad
+		\mathbf{F}_i =\int_{\Omega^e} [\phi_i\theta^{n}+\Delta t \alpha \phi_i + \Delta t (1-\alpha) (\phi_i - \nabla \phi_i \nabla\theta^n)]\mathrm{d}A \thinspace.
+	\end{aligned}
+\end{equation}
+We also can define the matrices as the way they are implemented in the Hiperlife:
 \begin{equation}\label{eq9}
 	\begin{aligned}[b]
 		Bk (i) &= jac \times [\phi_i \theta^n + \Delta t  \phi_i - \Delta t (1-\alpha)(\nabla \phi_i \cdot \nabla \theta^n)] \\
@@ -150,8 +173,25 @@ So the final formulation need for implementation takes the form of
 		\frac{\partial \phi_j}{\partial y})]  
 	\end{aligned}
 \end{equation}
-\section{Implementation} \label{sec: imp}
-In this section, we present the implementation of our solution in the Hiperlife. The program is divided into three separate files, main part which we create our problem by the Hiperlife headers, auxiliary header where we introduce parameters and declare defined functions, and at last auxiliary file, where we define some functions which provide required matrices like the Jacobian.
+Note that $dA=dx_{1} \times dx_{2}=jac \ d\xi d\eta$, which $jac=det(Jacobian)$.
+\section{Choice of Elements} \label{sec: coe}
+Thus, for this simple problem every Lagrange and serendipity family of interpolation functions are admissible for the interpolation of the temperature field, our choice is would be linear quadrilateral element.Linear  Quadrilateral Elements is the simplest quadrilateral element consists of four nodes. The associated interpolation functions for geometry and ﬁeld variables are bilinear.
+\begin{equation}\label{eq11}
+	\begin{aligned}[b]
+		\boldsymbol{\Phi}_{I}(\xi, \eta) = \frac{1}{4}(1+\xi_I\xi)(1+\eta_I\eta) \quad (I \ \text{from} \ 1 \ \text{to} \ 4)
+	\end{aligned}
+\end{equation}
+where $\xi_{I}$ and $\eta_{I}$ are the corner coordinates at element $T$ in domain of $\Omega_{T} \in (-1,1)^2$. As it shown in Figure \ref{fig_el} we are using $2 \times 2$ Gauss–Legendre quadrature integration.
+\begin{figure}[htbp]
+	\centering
+	\input{Figures/element.tex}
+	\caption{Linear quadrilateral element used for finite element model.}
+	\label{fig_el}
+\end{figure}
+
+We also choose a uniform mesh of $16 \times 16$ to model the domain, and the in the result section we would investigate the stability and accuracy of forward method $(\alpha = 0.0)$, Crank-Nicolson $(\alpha = 0.5)$ and backward difference $(\alpha = 1.0)$ for the solution.
+\section{Implementation} \label{sec: im}
+In this section, we present the implementation of our solution in the Hiperlife. The program is divided into three separate files, main part which we create our problem by the Hiperlife headers, auxiliary header where we introduce parameters and declare defined functions, and at last auxiliary file, where we define some functions which provide required matrices like Jacobian and Hessian.
 \subsubsection{HeatTransfer.cpp} \label{sec: m.cpp}
 \nolinenumbers
 \begin{lstlisting}
@@ -339,10 +379,10 @@ int main(int argc, char** argv)
 \begin{lstlisting}
 #ifndef AUXHeat_H
 #define AUXHeat_H
-
+	
 // C headers
 #include <iostream>
-
+	
 // hiperlife headers
 #include "hl_Core.h"
 #include "hl_Parser.h"
@@ -356,12 +396,12 @@ int main(int argc, char** argv)
 #include "hl_GlobalBasisFunctions.h"
 #include "hl_NonlinearSolver_NewtonRaphson.h"
 #include "hl_LinearSolver_Iterative_AztecOO.h"
-
+	
 // time parameters
 // alpha = 0.0: forward;        delta_t = 0.001
 // alpha = 0.5: crank-nicolson; delta_t = 0.05
 // alpha = 1.0: backward;       delta_t = 0.05
-
+	
 struct HeatParams
 {
 	enum RealParameters
@@ -375,46 +415,46 @@ struct HeatParams
 		{"alpha,", 0.5},
 	};
 };
-
+	
 void LS(hiperlife::FillStructure& fillStr);
-
+	
 #endif
 \end{lstlisting}
 \subsubsection{AuxHeatTransfer.cpp} \label{sec: a.cpp}
 \begin{lstlisting}
 // Header to auxiliary functions
 #include "AuxHeatTransfer.h"
-
+	
 // Hiperlife headers
 #include "hl_Core.h"
 #include "hl_ParamStructure.h"
 #include "hl_Parser.h"
-#include "hl_TypeDefs.h"                                                                         
+#include "hl_TypeDefs.h"
 #include "hl_GlobalBasisFunctions.h"                             
-#include "hl_StructMeshGenerator.h"                                                                             
+#include "hl_StructMeshGenerator.h"
 #include "hl_DistributedMesh.h"                                           
 #include "hl_FillStructure.h"                                             
 #include "hl_DOFsHandler.h"          
 #include "hl_HiPerProblem.h"         
 #include "hl_LinearSolver_Iterative_AztecOO.h"
 #include "hl_NonlinearSolver_NewtonRaphson.h"
-
+	
 using namespace std;
 using namespace hiperlife;
 using namespace hiperlife::Tensor;
-
-
+	
+	
 // Conduction
-
+	
 void LS(hiperlife::FillStructure& fillStr)
 {
 	double alpha  = fillStr.getRealParameter(HeatParams::alpha);
 	double delta_t = fillStr.getRealParameter(HeatParams::delta_t);
-	
+		
 	//--------------------------------------------------------------------------//
 	// --------------------------- INPUT DATA ----------------------------------//
 	//--------------------------------------------------------------------------//
-	
+		
 	// Dimensions
 	SubFillStructure& subFill = fillStr["dofHand"];
 	int nDOFs = subFill.numDOFs;                                        
@@ -424,23 +464,23 @@ void LS(hiperlife::FillStructure& fillStr)
 	// Nodal values at Gauss points
 	wrapper<double,1> nborDOFs(subFill.nborDOFs.data(),eNN);
 	wrapper<double,1> nborDOFs0(subFill.nborDOFs0.data(),eNN);
-	
+		
 	// Shape functions and derivatives at Gauss points
 	double jac; 
 	wrapper<double,1>  bf(subFill.nborBFs(), eNN);
 	tensor<double,2> Dbf(eNN,pDim); 
 	GlobalBasisFunctions::gradients(Dbf, jac, subFill);
-	
+		
 	//--------------------------------------------------------------------------//
 	// ---------------------------- OUTPUT DATA --------------------------------//
 	//--------------------------------------------------------------------------//
 	wrapper<double,2> Ak(fillStr.Ak(0, 0).data(), eNN, eNN);
 	wrapper<double,1> Bk(fillStr.Bk(0).data(),eNN);
-	
+		
 	//--------------------------------------------------------------------------//
 	// ---------------------------- KNOWN VARIABLES ----------------------------//
 	//--------------------------------------------------------------------------//
-	
+		
 	// Temperature
 	double theta = bf*nborDOFs0;
 	// Temperature Gradient
@@ -450,7 +490,7 @@ void LS(hiperlife::FillStructure& fillStr)
 		for (int d = 0; d < pDim; d++)
 		grad_theta(d) += Dbf(i,d)*nborDOFs0(i); 
 	}
-	
+		
 	//--------------------------------------------------------------------------//
 	//---------------------------- EQUATIONS -----------------------------------//
 	//--------------------------------------------------------------------------// 
@@ -468,16 +508,27 @@ void LS(hiperlife::FillStructure& fillStr)
 			double dotdd{};
 			for (int d = 0; d < pDim; d++)
 			dotdd += Dbf(i,d)*Dbf(j,d);
-			
+				
 			// Fill matrix
 			Ak(i,j) += jac * (bf(i)*bf(j) + delta_t*alpha*dotdd);
 		}
 	}
-}
-
+}	
 \end{lstlisting}
 \section{Results} \label{sec: rst}
 In this section, we present the results of our solution. Table \ref{tab1} shows the evolution of $\theta(0, 0, t)$ in different time approximation scheme. These values is presented for Crank-Nicholson scheme in Figure \ref{fig_Rs}. The contour demonstration of temperature in the whole domain at $t=1$ is also shown in Figure \ref{fig_Rs2}. 
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.6\textwidth]{Figures/result1.png}
+	\caption{$\theta(x, y, 1.0)$}
+	\label{fig_Rs}
+\end{figure}
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.6\textwidth]{Figures/result2.png}
+	\caption{Evolution of $\theta(0, 0, t)$ for time steps.}
+	\label{fig_Rs2}
+\end{figure}
 \begin{table}
 	\caption{Evolution of $\theta(0, 0, t)$ with various time
 		approximation schemes.}
@@ -502,18 +553,6 @@ In this section, we present the results of our solution. Table \ref{tab1} shows 
 		\end{tabular}
 	\end{center}
 \end{table}
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=0.6\textwidth]{Figures/result1.png}
-	\caption{$\theta(x, y, 1.0)$}
-	\label{fig_Rs}
-\end{figure}
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=0.6\textwidth]{Figures/result2.png}
-	\caption{Evolution of $\theta(0, 0, t)$ for time steps.}
-	\label{fig_Rs2}
-\end{figure}
 \bibliographystyle{unsrt}
 \bibliography{ref}
 \end{document}
