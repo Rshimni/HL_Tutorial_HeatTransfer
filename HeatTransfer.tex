@@ -50,8 +50,8 @@ citecolor=green,urlcolor=red]{hyperref}
 %opening
 \begin{document}
 \title{HiperLife Tutorial: Thermal Conduction}
-\author[1]{Arash Imani}
-\affil[1]{LaCàN}
+\author{Arash Imani}
+\affil{LaCàN}
 \maketitle
 
 \linenumbers
@@ -133,39 +133,39 @@ and
 where $v$ is a test function, which will be equated, in the our FE model to the interpolation function used for $\theta$.
 
 Applying integration by part, and also considering boundary condition, the weak form takes the following form
-\begin{equation}\label{eq7}
+\begin{equation}\label{eq10}
 	\begin{aligned}
 		\mathcal{F}(\theta; v)=\int_{\Omega} v\{\theta\}^{n+1} - \Delta t \alpha [v - \nabla v (\nabla \{\theta\}^{n+1})] \mathrm{d} \Omega - \int_{\Omega} v\theta^{n} + \Delta t (1-\alpha) [v -\nabla v \nabla\theta^n ] \mathrm{d} \Omega\thinspace.
 	\end{aligned}
 \end{equation}
 \section{Finite Element Model} \label{sec: fem}
 Since we are developing the Ritz-Galerkin finite element model, the choice of the weight functions is restricted to the spaces of approximation functions used for the solution field. Suppose that the dependent variable $\theta$ approximated by expansions of the form
-\begin{equation}\label{eq5}
+\begin{equation}\label{eq11}
 	\begin{aligned}
-		\theta(\mathrm{x}, t)= \sum_{m=1}^{M} \phi_m(\mathrm{x}) \mathbf{\theta}^m(t) = \boldsymbol{\Phi}^T\mathbf{\theta} \thinspace,
+		\theta(\mathbf{x}, t)= \sum_{m=1}^{M} \phi_m(\mathrm{x}) \mathbf{\theta}^m(t) = \boldsymbol{\Phi}^T\boldsymbol{\theta} \thinspace,
 	\end{aligned}
 \end{equation}
 Lets rewrite this equation for known and unkown variables.
-\begin{equation}\label{eq8}
+\begin{equation}\label{eq12}
 	\begin{aligned}[b]
 		\mathcal{F}(\theta; v)=\int [\boldsymbol{\Phi}\boldsymbol{\Phi}^T + \Delta t \alpha\nabla\boldsymbol{\Phi}\nabla\boldsymbol{\Phi}^T]\{\theta\}^{n+1} \mathrm{d} \Omega - \int  [\boldsymbol{\Phi}\theta^{n}+\Delta t \alpha \boldsymbol{\Phi} + \Delta t (1-\alpha) (\boldsymbol{\Phi} - \nabla \boldsymbol{\Phi} \nabla\theta^n)]\mathrm{d} \Omega\thinspace.
 	\end{aligned}
 \end{equation}
 The above equations can be written symbolically in matrix form as
-\begin{equation}\label{eq8}
+\begin{equation}\label{eq13}
 	\begin{aligned}
 		\mathbf{K}\mathbf{\theta} = \mathbf{F}\thinspace.
 	\end{aligned}
 \end{equation}
 The coefficient matrices shown in Eq. (9) are defined by
-\begin{equation}\label{eq10}
+\begin{equation}\label{eq14}
 	\begin{aligned}
 		\mathbf{K}_{ij} = \int_{\Omega^e} [\phi_i\phi_j + \Delta t \alpha\nabla\phi_i\nabla\phi_j]\mathrm{d}A\thinspace, \quad
 		\mathbf{F}_i =\int_{\Omega^e} [\phi_i\theta^{n}+\Delta t \alpha \phi_i + \Delta t (1-\alpha) (\phi_i - \nabla \phi_i \nabla\theta^n)]\mathrm{d}A \thinspace.
 	\end{aligned}
 \end{equation}
 We also can define the matrices as the way they are implemented in the Hiperlife:
-\begin{equation}\label{eq9}
+\begin{equation}\label{eq15}
 	\begin{aligned}[b]
 		Bk (i) &= jac \times [\phi_i \theta^n + \Delta t  \phi_i - \Delta t (1-\alpha)(\nabla \phi_i \cdot \nabla \theta^n)] \\
 		Ak (i,j) &=  jac \times [\phi_i\phi_j + \Delta t \alpha(\frac{\partial \phi_i}{\partial x}
@@ -173,10 +173,10 @@ We also can define the matrices as the way they are implemented in the Hiperlife
 		\frac{\partial \phi_j}{\partial y})]  
 	\end{aligned}
 \end{equation}
-Note that $dA=dx_{1} \times dx_{2}=jac \ d\xi d\eta$, which $jac=det(Jacobian)$.
+Note that $dA=dx_{1} \times dx_{2}=jac \ d\xi d\eta$, which $jac=\mathrm{det}(Jacobian)$.
 \section{Choice of Elements} \label{sec: coe}
 Thus, for this simple problem every Lagrange and serendipity family of interpolation functions are admissible for the interpolation of the temperature field, our choice is would be linear quadrilateral element.Linear  Quadrilateral Elements is the simplest quadrilateral element consists of four nodes. The associated interpolation functions for geometry and ﬁeld variables are bilinear.
-\begin{equation}\label{eq11}
+\begin{equation}\label{eq16}
 	\begin{aligned}[b]
 		\boldsymbol{\Phi}_{I}(\xi, \eta) = \frac{1}{4}(1+\xi_I\xi)(1+\eta_I\eta) \quad (I \ \text{from} \ 1 \ \text{to} \ 4)
 	\end{aligned}
